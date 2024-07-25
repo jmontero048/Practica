@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 using scc_frontend.Helpers;
 using scc_frontend.Models.Asadas;
-
+//Saludos
 namespace scc_frontend.Controllers.Pajas
 {
     public class AsadaCobroController : SscController
