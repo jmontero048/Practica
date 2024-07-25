@@ -1,0 +1,299 @@
+﻿@using scc_frontend.Models.Oficinas;
+@using scc_frontend.Models.Catalogos;
+@using scc_frontend.Models.ProcesoEjecutado
+@model IEnumerable<scc_frontend.Models.Asadas.AsadaCobroResumen>
+@{
+    Layout = "_Layout_basic";
+    ViewData["Title"] = "Listado de cobros de asadas";
+    var listaCompanias = ViewData["listaCompanias"] as IEnumerable<Compania>;
+    var listaOficinas = ViewData["listaOficinas"] as IEnumerable<Oficina>;
+    var listaEstadosFE = ViewData["TBL_ESTADOS_FACTURAELECTRONICA"] as IEnumerable<CatalogoItem>;
+    var listaEstados = ViewData["TBL_SINO"] as IEnumerable<CatalogoItem>;
+}
+
+<script type="text/javascript" language="javascript">
+
+    function estadoDeFacturaAsadaSecuencial(codigoOrganizacion, codigoCompania, codigoOficina, codigoPaja, numeroCobro, numeroFactura, numeroClave, indicadorDeAmbiente, texoCodigoEstadoFE) {
+
+        $.ajax({
+            url: '@Url.Action("EstadoDeFacturaAsadaSecuencial", "FacturacionElectronica")',
+            type: 'GET',
+            cache: false,
+            data: { 'codigoOrganizacion': codigoOrganizacion, 'codigoCompania': codigoOrganizacion, 'codigoOficina': codigoOficina, 'codigoPaja': codigoPaja, 'numeroCobro': numeroCobro, 'numeroFactura': numeroFactura, 'numeroClave': numeroClave, 'indicadorDeAmbiente': indicadorDeAmbiente, 'textoCodigoEstadoFE': texoCodigoEstadoFE },
+            success: function(data){
+                console.log("enviarEstadoDeFacturaAsadaSecuencialSMS: " + data);
+            },
+            error: function(xhr, textStatus, error){
+                console.log("enviarEstadoDeFacturaAsadaSecuencialSMS - error ");
+                console.log(xhr);
+                console.log(textStatus);
+                console.log(error);
+            }
+        });
+    }
+
+    function estadoDeFacturaAsadaSecuencialChecked() {
+        const checkboxes = document.querySelectorAll('input[name="checkOne"]:checked');
+        let row, codigoOrganizacion, codigoCompania, codigoOficina, codigoPaja, numeroCobro, numeroFactura, claveFactura, textoCodigoEstadoFE;
+
+        for (let checkbox of checkboxes) {
+            row = checkbox.parentNode.parentNode;
+            codigoOrganizacion = row.querySelector('input[name="codigoOrganizacion"]').value
+            codigoCompania = row.querySelector('input[name="codigoCompania"]').value
+            codigoOficina = row.querySelector('input[name="codigoOficina"]').value
+            codigoPaja = row.querySelector('input[name="codigoPaja"]').value
+            numeroCobro = row.querySelector('input[name="numeroCobro"]').value
+            numeroFactura = row.querySelector('input[name="numeroFactura"]').value
+            claveFactura = row.querySelector('input[name="claveFactura"]').value
+            textoCodigoEstadoFE = row.querySelector('input[name="textoCodigoEstadoFE"]').value
+            estadoDeFacturaAsadaSecuencial(codigoOrganizacion, codigoCompania, codigoOficina, codigoPaja, numeroCobro, numeroFactura, claveFactura, 1, textoCodigoEstadoFE);
+        }
+    }
+</script>
+
+
+@section breadcrumb{
+    <!--begin::Item-->
+    <li class="breadcrumb-item"><span class="bullet bg-gray-400 w-5px h-2px"></span></li>
+    <!--end::Item-->
+    <!--begin::Item-->
+    <li class="breadcrumb-item text-muted">Asadas</li>
+    <!--end::Item-->
+    <!--begin::Item-->
+    <li class="breadcrumb-item"><span class="bullet bg-gray-400 w-5px h-2px"></span></li>
+    <!--end::Item-->
+    <!--begin::Item-->
+    <li class="breadcrumb-item text-muted">@ViewData["Title"]</li>
+    <!--end::Item-->
+}
+
+<div class="container">
+    <!--Inicio fila las listas  -->
+    <div class="row">
+        <!--Inicio columna para cargar los registros-->
+        <div class="col">
+            <!--Inicio de seccion de filtros -->
+            <div class="d-flex justify-content-end">
+                @* <div class="col">
+                    <button class="btn btn-sm sitec-green-backcolor" type="button" onclick="estadoDeFacturaAsadaSecuencialChecked()">Verificar marcadas</button>
+                </div>  *@
+                <div class="col">
+                    @using (Html.BeginForm("ListadoAsadasCobros", "AsadaCobro", new {codigoOrganizacion = 0, codigoCompania = ViewBag.CodigoCompania, codigoOficina = ViewBag.CodigoOficina, numeroPaja = ViewBag.NumeroPaja, codigoEstado = ViewBag.CodigoEstado, codigoEstadoFE = ViewBag.CodigoEstadoFE, fechaInicio = ViewBag.FechaInicio, fechaFinal = ViewBag.FechaFinal }, FormMethod.Get)) {
+                        <!--Cargar filtro de Companias-->
+                        <label class="text-muted" for="CompaniaSelect">Companias</label>
+                        <select class="text-muted border-input_green" id="companiaSelect" name="CodigoCompania" style="width: 125px;"> 
+                            @foreach (var itemCompania in listaCompanias) {
+                                <option value="@itemCompania.CodigoCompania">@itemCompania.NombreCompania</option>
+                            }
+                        </select>
+
+                        <!--Cargar filtro de oficinas-->
+                        <label class="text-muted" for="oficinaSelect">Oficina</label>
+                        <select class="text-muted border-input_green" id="oficinaSelect" name="CodigoOficina" style="width: 125px;"> 
+                            @foreach (var itemOficina in listaOficinas) {
+                                <option value="@itemOficina.CodigoOficina">@itemOficina.NombreOficina</option>
+                            }
+                        </select>
+
+                        <!--Cargar filtro de numero de paja -->
+                        <label class="text-muted" for="numeroPaja">Paja</label>
+                        <input class=" border-input_green" id="numeroPaja"  name="NumeroPaja" value="" style="width: 100px;"/>
+
+                        <!--Cargar filtro de estados gestion-->
+                        <label class="text-muted" for="estadoSelect">Pendiente</label>
+                        <select class="text-muted border-input_green" id="estadoSelect" name="CodigoEstado" style="width: 125px;">
+                            @foreach (var itemEstado in listaEstados) {
+                                <option value="@itemEstado.codigoParametro">@itemEstado.nombreParametro</option>
+                            }
+                        </select>
+
+                        <!--Cargar filtro de estados factura electronica-->
+                        <label class="text-muted" for="estadoFeSelect">Estado</label>
+                        <select class="text-muted border-input_green" id="estadoFeSelect" name="CodigoEstadoFE" style="width: 125px;">
+                            @foreach (var itemEstado in listaEstadosFE) {
+                                <option value="@itemEstado.codigoParametro">@itemEstado.nombreParametro</option>
+                            }
+                            <option value="99">SIN FACTURA</option>
+                        </select>
+
+                        <!--fecha inicio -->
+                        <label class="text-muted" for="fechaInicioRango">Inicio</label>
+                        <input class="border-input_green" id="fechaInicioRango" type="date" name="FechaInicio" value="" style="width: 90px;"/>
+
+                        <!--fecha final -->
+                        <label class="text-muted" for="fechaFinalRango">Final</label>
+                        <input class="border-input_green" id="fechaFinalRango" type="date" name="FechaFinal" value="" style="width: 90px;"/>
+
+                        <!--Boton de aplicar filtros-->
+                        <button class="btn btn-sm sitec-green-backcolor" type="submit" id="botonFiltrar">Filtrar</button>
+                    }
+                </div>
+            </div> 
+            <!--Final de seccion de filtros-->  
+
+            <!--Inicio de la tabla de items a mostrar -->
+            <div class="row align-items-center">
+                <div class="scrollable-table-container" tabindex="0">
+                    <table id="tablaListaItems" class="table table-row-dashed table-striped table-light table-wrappe table-fixed-header">
+                        <thead class="tabla-encabezado">
+                            <tr>
+                                <th>
+                                    <input class="checkbox-header" type="checkbox" id="checkAll" onclick="checkAll()"/>
+                                </th>
+                                <th>
+                                    Consecutivo
+                                </th>
+                                <th>
+                                    Localizacion
+                                </th>
+                                <th>
+                                    Cobro
+                                </th>
+                                <th>
+                                    Cedula
+                                </th>
+                                <th>
+                                    Nombre del abonado
+                                </th>
+                                <th>
+                                    Fecha de vencimiento
+                                </th>
+                                <th>
+                                    Monto cobro
+                                </th>
+                                <th>
+                                    Monto pagadado
+                                </th>
+                                <th>
+                                    Factura
+                                </th>
+                                <th>
+                                    Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model != null)
+                            {
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <th>
+                                            <input name="codigoOrganizacion" type="hidden" value="@item.CodigoOrganizacion">
+                                            <input name="codigoCompania" type="hidden" value="@item.CodigoCompania">
+                                            <input name="codigoOficina" type="hidden" value="@item.CodigoOficina">
+                                            <input name="codigoPaja" type="hidden" value="@item.CodigoPaja.">
+                                            <input name="numeroCobro" type="hidden" value="@item.NumeroCobro.">
+                                            <input name="numeroFactura" type="hidden" value="@item.NumeroFactura.">
+                                            <input name="claveFactura" type="hidden" value="@item.ClaveFactura.">
+                                            <input name="textoCodigoEstadoFE" type="hidden" value="@item.TextoCodigoEstadoFE.">
+                                            <input class="form-check-input" type="checkbox" name="checkOne" />
+                                        </th>
+                                        <td class="text-center">
+                                            @Html.DisplayFor(modelItem => item.CodigoPaja)
+                                        </td>
+                                        <td class="text-center">
+                                            @Html.DisplayFor(modelItem => item.NumeroLocalizacion)
+                                        </td>
+                                        <td class="text-center">
+                                            @Html.DisplayFor(modelItem => item.NumeroCobro)
+                                        </td>
+                                        <td class="text-start">
+                                            @string.Format("{0:n}", item.NumeroCedula)
+                                        </td>
+                                        <td class="text-start">
+                                            @Html.DisplayFor(modelItem => item.NombrePersona)
+                                        </td>
+                                        <td class="text-center">
+                                            @Html.DisplayFor(modelItem => item.FechaVencimiento)
+                                        </td>
+                                        <td class="text-center">
+                                            @{
+                                                double montoAlCobro = item.MontoCobro +  item.MontoImpuesto;
+                                            }
+                                            @montoAlCobro.ToString("0,0.00", System.Globalization.CultureInfo.InvariantCulture)
+                                        </td>
+                                        <td class="text-center">
+                                            @Html.DisplayFor(modelItem => item.MontoPagado)
+                                        </td>
+                                        <td class=" text-center">
+                                            @if (item.CodigoEstadoFE == 1){<div class="badge rounded-pill bg-primary">@Html.DisplayFor(modelItem => item.TextoCodigoEstadoFE)</div>}
+                                            @if (item.CodigoEstadoFE == 2){<div class="badge rounded-pill bg-secondary">@Html.DisplayFor(modelItem => item.TextoCodigoEstadoFE)</div>}
+                                            @if (item.CodigoEstadoFE == 3){<div class="badge rounded-pill bg-success">@Html.DisplayFor(modelItem => item.TextoCodigoEstadoFE)</div>}
+                                            @if (item.CodigoEstadoFE == 4){<div class="badge rounded-pill bg-light-success">@Html.DisplayFor(modelItem => item.TextoCodigoEstadoFE)</div>}
+                                            @if (item.CodigoEstadoFE == 5){<div class="badge rounded-pill bg-danger text-white">@Html.DisplayFor(modelItem => item.TextoCodigoEstadoFE)</div>}
+                                            @if (item.CodigoEstadoFE == 6){<div class="badge rounded-pill bg-warning text-dark">@Html.DisplayFor(modelItem => item.TextoCodigoEstadoFE)</div>}
+                                            @if (item.CodigoEstadoFE == 99){<div class="badge rounded-pill bg-light text-dark">@Html.DisplayFor(modelItem => item.TextoCodigoEstadoFE)</div>}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group dropend">
+                                            <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Opciones
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                                <li><a class="dropdown-item" href="@Url.Action("EnviarFacturaElectronicaAsada", "FacturacionElectronica", new { codigoOrganizacion = item.CodigoOrganizacion,  codigoCompania = item.CodigoCompania, codigoOficina = item.CodigoOficina, codigoPaja = item.CodigoPaja, numeroCobro = item.NumeroCobro, indicadorDeAmbiente = 0})">Enviar FE</a></li>
+                                                <li><a class="dropdown-item" href="@Url.Action("EstadoDeFacturaAsada", "FacturacionElectronica", new { codigoOrganizacion = item.CodigoOrganizacion,  codigoCompania = item.CodigoCompania, codigoOficina = item.CodigoOficina, codigoPaja = item.CodigoPaja,  numeroCobro = item.NumeroCobro, indicadorDeAmbiente = 0})">Verificar FE/NC</a></li>
+                                                <li><a class="dropdown-item" href="@Url.Action("ListadoFacturaElectronicaBitacora", "FacturacionElectronica", new { codigoOrganizacion = item.CodigoOrganizacion,  codigoCompania=item.CodigoCompania, codigoOficina = item.CodigoOficina, campoLlave = item.NumeroCobro.ToString(), nombrePlataforma=3})">Bitácora</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="@Url.Action("EnviarNotaCreditoAsada", "FacturacionElectronica", new { codigoOrganizacion = item.CodigoOrganizacion,  codigoCompania=item.CodigoCompania, codigoOficina = item.CodigoOficina, codigoPaja = item.CodigoPaja, numeroCobro = item.NumeroCobro})">Aplicar NC</a></li>
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+
+                            <!--agregar una linea vacia para agregar un nuevo registro-->
+                            <tr>
+                                <th>
+                                </th>
+                                <td class="text-center">
+                                </td>
+                                <td class="text-center">
+                                </td>
+                                <td class="text-center">
+                                </td>
+                                <td class="text-start">
+                                </td>
+                                <td class="text-start">
+                                </td>
+                                <td class="text-center">
+                                </td>
+                                <td class="text-center">
+                                </td>
+                                <td class="text-center">
+                                </td>
+                                <td class=" text-center">
+                                </td>
+                                <td>
+                                    <a class="btn btn-icon btn-flex btn-outline-success w-30px h-30px me-3" data-bs-toggle="tooltip" title="Agregar" href="@Url.Action("AgregarAsadaCobro", "AsadaCobro")"><i class="ki-outline ki-plus fs-3"></i></a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!--Final de seccion cargar operaciones -->
+        </div>
+        <!--Final columna para cargar los registros-->
+    </div>
+    <!--Final fila las listas  -->
+</div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="~/js/jquery-3.6.0.min.js"></script>   
+
+<script>
+    // Función para mostrar el loader
+    function showLoader() {
+        document.getElementById("loader").style.display = "flex"; // Mostrar el loader
+    }
+
+    // Función para ocultar el loader
+    function hideLoader() {
+        document.getElementById("loader").style.display = "none"; // Ocultar el loader
+    }
+
+    // Ocultar el loader cuando la página esté cargada
+    hideLoader();
+</script>
